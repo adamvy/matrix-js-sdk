@@ -1641,6 +1641,8 @@ export class SyncApi {
         // to be decorated with sender etc.
         const [mainTimelineEvents, threadedEvents] = this.client.partitionThreadedEvents(room, timelineEventList || []);
         room.addLiveEvents(mainTimelineEvents, null, fromCache);
+        this.client.processBeaconEvents(room, timelineEventList);
+
         await this.processThreadEvents(room, threadedEvents, false);
     }
 
