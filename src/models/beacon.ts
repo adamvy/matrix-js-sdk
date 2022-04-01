@@ -26,12 +26,14 @@ export enum BeaconEvent {
     Update = "Beacon.update",
     LivenessChange = "Beacon.LivenessChange",
     LocationUpdate = "LocationUpdate",
+    Destroy = "Destroy"
 }
 
 export type BeaconEventHandlerMap = {
     [BeaconEvent.Update]: (event: MatrixEvent, beacon: Beacon) => void;
     [BeaconEvent.LivenessChange]: (isLive: boolean, beacon: Beacon) => void;
     [BeaconEvent.LocationUpdate]: (locationState: BeaconLocationState) => void;
+    [BeaconEvent.Destroy]: (beaconIdentifier: string) => void;
 };
 
 export const isTimestampInDuration = (
@@ -103,6 +105,7 @@ export class Beacon extends TypedEventEmitter<Exclude<BeaconEvent, BeaconEvent.N
         if (this.livenessWatchInterval) {
             clearInterval(this.livenessWatchInterval);
         }
+        this.emit(BeaconEvent.Destroy, this.identifier);
     }
 
     /**
@@ -126,6 +129,8 @@ export class Beacon extends TypedEventEmitter<Exclude<BeaconEvent, BeaconEvent.N
     // TODO is name confusing while these are m.beacon events ?
     public addLocations(locationEvents: MatrixEvent[]): void {
         // discard locations for beacons that are not live
+
+        console.log('hhh addLocation', JSON.stringify(locationEvents));
         if (!this.isLive) {
             return;
         }

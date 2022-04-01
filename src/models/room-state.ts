@@ -410,11 +410,8 @@ export class RoomState extends TypedEventEmitter<EmittedEvents, EventHandlerMap>
             return;
         }
 
-        // console.log('hhh', 'RS.processBeaconEvents', this.beacons.keys(), events);
-
-
         // names are confusing here
-        // a Beacon is the 'parent' event, but event type is 'm.beacon_info'
+        // a Beacon is the parent event, but event type is 'm.beacon_info'
         // a location is the 'child' related to the Beacon, but the event type is 'm.beacon'
         // group locations by beaconInfoId
         const locationEventsByBeaconId = events.reduce<Record<string, MatrixEvent[]>>((acc, event) => {
@@ -469,8 +466,24 @@ export class RoomState extends TypedEventEmitter<EmittedEvents, EventHandlerMap>
      * @experimental
      */
     private setBeacon(event: MatrixEvent): void {
+        console.log('hhh', event.getType(), event.isRedacted(), event.isRedaction(), event);
         if (this.beacons.has(event.getType())) {
-            return this.beacons.get(event.getType()).update(event);
+            console.log('hhh', 'already got it')
+
+            const beacon = this.beacons.get(event.getType());
+
+            if (event.isRedacted()) {
+                beacon.destroy();
+                // TODO is this right? should be show something in TL
+                this.beacons.delete(event.getType());
+                return;
+            }
+
+            return beacon.update(event);
+        }
+
+        if (event.isRedacted()) {
+            return;
         }
 
         const beacon = new Beacon(event);
@@ -478,6 +491,7 @@ export class RoomState extends TypedEventEmitter<EmittedEvents, EventHandlerMap>
         this.reEmitter.reEmit<BeaconEvent, BeaconEvent>(beacon, [
             BeaconEvent.New,
             BeaconEvent.Update,
+            BeaconEvent.Destroy,
             BeaconEvent.LivenessChange,
         ]);
 
